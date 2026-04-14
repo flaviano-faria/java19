@@ -1,6 +1,6 @@
 # java19
 
-Sample Maven project focused on **JDK 19 library additions** around `java.util` **static factory methods** that size hash-based collections using an **expected number of mappings or elements**, instead of exposing raw hash-table capacity.
+Sample Maven project focused on **JDK 19-era features**: `java.util` **static factory methods** that size hash-based collections by **expected mappings or elements**, plus **language** demos such as **pattern matching for `switch`** (JEP 427 preview in 19; **final in 21** — this repo targets Java 21).
 
 The repository name refers to the release that introduced these APIs; the toolchain compiles against **Java 21** (see `pom.xml`).
 
@@ -43,6 +43,7 @@ Or run the desired class from your IDE.
 | `LinkedHashMapNewLinkedHashMapDemo` | `LinkedHashMap.newLinkedHashMap(int numMappings)` | Pre-sizing plus **insertion-order** iteration; notes `LinkedHashMap(int, float, boolean)` for access-order. |
 | `LinkedHashSetNewLinkedHashSetDemo` | `LinkedHashSet.newLinkedHashSet(int numElements)` | Pre-sizing plus **insertion-order** iteration over the set. |
 | `WeakHashMapNewWeakHashMapDemo` | `WeakHashMap.newWeakHashMap(int numMappings)` | Pre-sizing; **weak keys** (entries may disappear after GC when keys are not strongly reachable); load factor demo keeps strong references to keys on purpose. |
+| `patternswitch.PatternSwitchDemo` | Pattern matching for `switch` (JEP 427) | Package `com.storebackoffice.patternswitch`. **`sealed` `Payment`** with `record` permits; **type patterns**; **`case` … `when`** guards; **exhaustive** `switch` (compiler-checked). |
 | `Main` | — | Minimal placeholder (`Hello, World!`). |
 
 ### Example commands
@@ -53,6 +54,7 @@ mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.HashSetNewHashSetD
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.LinkedHashMapNewLinkedHashMapDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.LinkedHashSetNewLinkedHashSetDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.WeakHashMapNewWeakHashMapDemo
+mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.patternswitch.PatternSwitchDemo
 ```
 
 ## Why these factory methods exist
@@ -79,7 +81,9 @@ java19/
     ├── HashSetNewHashSetDemo.java
     ├── LinkedHashMapNewLinkedHashMapDemo.java
     ├── LinkedHashSetNewLinkedHashSetDemo.java
-    └── WeakHashMapNewWeakHashMapDemo.java
+    ├── WeakHashMapNewWeakHashMapDemo.java
+    └── patternswitch/
+        └── PatternSwitchDemo.java
 ```
 
 ## References
