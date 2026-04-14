@@ -1,15 +1,18 @@
 # java19
 
-Sample Maven project focused on **JDK 19-era features**: `java.util` **static factory methods** that size hash-based collections by **expected mappings or elements**, plus **language** demos such as **pattern matching for `switch`** (JEP 427 preview in 19; **final in 21** — this repo targets Java 21).
+Educational Maven project showcasing **JDK 19–era APIs and language work** that remain relevant on newer JDKs. The artifact name refers to **Java 19**; the build is pinned to **Java 21** in `pom.xml` (preview features from 19 are often **final** there—no `--enable-preview` for the demos in this repo).
 
-The repository name refers to the release that introduced these APIs; the toolchain compiles against **Java 21** (see `pom.xml`).
+## Contents at a glance
+
+| Track | What you get |
+|-------|----------------|
+| **Collections (JDK 19)** | Static factories that size hash structures by **expected element or mapping count** (`HashMap.newHashMap`, `HashSet.newHashSet`, `LinkedHashMap.newLinkedHashMap`, `LinkedHashSet.newLinkedHashSet`, `WeakHashMap.newWeakHashMap`), with comparisons to `new Type<>(initialCapacity)` and notes on **load factor**. |
+| **Language (JEP 427)** | **`sealed` types**, **`record`**, pattern matching for **`switch`**, **`when`** guards, exhaustiveness—under package `com.storebackoffice.patternswitch`. |
 
 ## Prerequisites
 
-- **JDK 21** (or newer) aligned with `maven.compiler.source` / `maven.compiler.target`
+- **JDK 21** or newer (matches `maven.compiler.source` / `target` in `pom.xml`)
 - **Apache Maven 3.x**
-
-Verify:
 
 ```bash
 java -version
@@ -18,35 +21,51 @@ mvn -version
 
 ## Build
 
-From the project root:
-
 ```bash
 mvn -q compile
 ```
 
-## Running the demos
+Compiled classes are written to `target/classes`.
 
-Each demo is a class with a `public static void main(String[] args)` entry point. Run with the Exec plugin:
+## Running demos
+
+Every demo exposes `public static void main(String[] args)`.
+
+### Option A: Maven Exec (plugin is resolved from the default plugin repository when you invoke the goal)
 
 ```bash
-mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.<DemoClass>
+mvn -q compile exec:java -Dexec.mainClass=<fully.qualified.ClassName>
 ```
 
-Or run the desired class from your IDE.
+### Option B: `java` on the classpath (no Exec plugin required)
 
-### Demo classes
+After `mvn -q compile`:
 
-| Class | API highlighted | What it shows |
-|--------|-----------------|---------------|
-| `HashMapNewHashMapDemo` | `HashMap.newHashMap(int numMappings)` | Pre-sizing for a known number of entries; comparison with `new HashMap<>(initialCapacity)`; default load factor vs `HashMap(int, float)`. |
-| `HashSetNewHashSetDemo` | `HashSet.newHashSet(int numElements)` | Same idea for sets; load factor via `HashSet(int, float)`. |
-| `LinkedHashMapNewLinkedHashMapDemo` | `LinkedHashMap.newLinkedHashMap(int numMappings)` | Pre-sizing plus **insertion-order** iteration; notes `LinkedHashMap(int, float, boolean)` for access-order. |
-| `LinkedHashSetNewLinkedHashSetDemo` | `LinkedHashSet.newLinkedHashSet(int numElements)` | Pre-sizing plus **insertion-order** iteration over the set. |
-| `WeakHashMapNewWeakHashMapDemo` | `WeakHashMap.newWeakHashMap(int numMappings)` | Pre-sizing; **weak keys** (entries may disappear after GC when keys are not strongly reachable); load factor demo keeps strong references to keys on purpose. |
-| `patternswitch.PatternSwitchDemo` | Pattern matching for `switch` (JEP 427) | Package `com.storebackoffice.patternswitch`. **`sealed` `Payment`** with `record` permits; **type patterns**; **`case` … `when`** guards; **exhaustive** `switch` (compiler-checked). |
-| `Main` | — | Minimal placeholder (`Hello, World!`). |
+```bash
+java -cp target/classes com.storebackoffice.HashMapNewHashMapDemo
+java -cp target/classes com.storebackoffice.patternswitch.PatternSwitchDemo
+```
 
-### Example commands
+### Demo catalog
+
+Base package **`com.storebackoffice`** (except pattern switch):
+
+| Main class | Highlights |
+|------------|------------|
+| `com.storebackoffice.HashMapNewHashMapDemo` | `HashMap.newHashMap`, vs `new HashMap<>(capacity)`, load factor |
+| `com.storebackoffice.HashSetNewHashSetDemo` | `HashSet.newHashSet`, load factor |
+| `com.storebackoffice.LinkedHashMapNewLinkedHashMapDemo` | `LinkedHashMap.newLinkedHashMap`, insertion order, load factor |
+| `com.storebackoffice.LinkedHashSetNewLinkedHashSetDemo` | `LinkedHashSet.newLinkedHashSet`, insertion order, load factor |
+| `com.storebackoffice.WeakHashMapNewWeakHashMapDemo` | `WeakHashMap.newWeakHashMap`, weak keys + GC caveats, load factor |
+| `com.storebackoffice.Main` | Minimal placeholder |
+
+Language demo (separate package):
+
+| Main class | Highlights |
+|------------|------------|
+| `com.storebackoffice.patternswitch.PatternSwitchDemo` | JEP 427-style pattern `switch`: `sealed` `Payment`, `record` permits, `case` / `when`, exhaustive `switch` |
+
+### Copy-paste: Exec plugin
 
 ```bash
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.HashMapNewHashMapDemo
@@ -55,21 +74,18 @@ mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.LinkedHashMapNewLi
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.LinkedHashSetNewLinkedHashSetDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.WeakHashMapNewWeakHashMapDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.patternswitch.PatternSwitchDemo
+mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.Main
 ```
 
-## Why these factory methods exist
+## Why the new collection factories matter
 
-For `HashMap` (and similar types), the constructor `new HashMap<>(n)` takes **`n` as initial capacity** (bucket count), not “I will store `n` key-value pairs.” With the default **load factor** (0.75), choosing the wrong `n` causes extra internal **resize/rehash** work.
+For `HashMap` and friends, `new HashMap<>(n)` means **`n` is initial bucket capacity**, not “I will store `n` pairs.” With the default **load factor** (0.75), a wrong `n` causes unnecessary **resize / rehash** work.
 
-The JDK 19 factories accept **`numMappings` / `numElements`**: the implementation derives a suitable initial capacity so the table can grow to about that many entries at the default load factor **without unnecessary resizing**.
+The JDK 19 factories take **`numMappings`** or **`numElements`**: the implementation chooses a capacity suited to holding about that many entries at the default load factor.
 
-Custom load factors still use the existing constructors, for example:
+For a **non-default load factor**, keep using constructors such as `HashMap(int, float)`, `LinkedHashMap(int, float, boolean)`, `WeakHashMap(int, float)`, etc.
 
-- `HashMap(int initialCapacity, float loadFactor)`
-- `LinkedHashMap(int initialCapacity, float loadFactor)` or `(int, float, boolean accessOrder)`
-- `WeakHashMap(int initialCapacity, float loadFactor)`
-
-## Project layout
+## Source layout
 
 ```text
 java19/
@@ -83,14 +99,19 @@ java19/
     ├── LinkedHashSetNewLinkedHashSetDemo.java
     ├── WeakHashMapNewWeakHashMapDemo.java
     └── patternswitch/
-        └── PatternSwitchDemo.java
+        └── PatternSwitchDemo.java   # sealed Payment + records; pattern switch
 ```
 
 ## References
 
-- [JDK 19 release notes](https://www.oracle.com/java/technologies/javase/19-relnote-issues.html) (platform and `java.util` changes)
-- Javadoc for each type: `HashMap.newHashMap`, `HashSet.newHashSet`, `LinkedHashMap.newLinkedHashMap`, `LinkedHashSet.newLinkedHashSet`, `WeakHashMap.newWeakHashMap`
+- [JDK 19 release notes](https://www.oracle.com/java/technologies/javase/19-relnote-issues.html)
+- [JEP 427: Pattern Matching for switch](https://openjdk.org/jeps/427) (preview scope in JDK 19; finalized in a later release—this project uses **JDK 21** syntax)
+- Javadoc (Java 21+): `HashMap.newHashMap`, `HashSet.newHashSet`, `LinkedHashMap.newLinkedHashMap`, `LinkedHashSet.newLinkedHashSet`, `WeakHashMap.newWeakHashMap`
+
+## Encoding
+
+Keep **`README.md` and `*.java` as UTF-8** (without UTF-16). Mixed encodings break diffs and GitHub rendering.
 
 ## License
 
-No license file is present in this repository; treat usage terms as unspecified until one is added.
+No `LICENSE` file is checked in; treat terms as unspecified until you add one.
