@@ -1,71 +1,75 @@
 # java19
 
-Educational Maven project showcasing **JDK 19–era APIs and language work** that remain relevant on newer JDKs. The artifact name refers to **Java 19**; the build is pinned to **Java 21** in `pom.xml` (preview features from 19 are often **final** there—no `--enable-preview` for the demos in this repo).
+| | |
+|--|--|
+| **Coordinates** | `com.storebackoffice:java19:1.0-SNAPSHOT` |
+| **JDK** | **21** (`maven.compiler.source` / `target` in `pom.xml`) |
+| **Build** | Apache Maven, **no third-party dependencies** |
 
-## Contents at a glance
+Small **executable demos** for **JDK 19–era `java.util` factory methods** (still current on newer JDKs), a **set comparison** walkthrough, and **pattern matching for `switch`** (JEP 427 was preview in 19; syntax here matches **Java 21** final rules—no `--enable-preview`).
 
-| Track | What you get |
-|-------|----------------|
-| **Collections (JDK 19)** | Static factories that size hash structures by **expected element or mapping count** (`HashMap.newHashMap`, `HashSet.newHashSet`, `LinkedHashMap.newLinkedHashMap`, `LinkedHashSet.newLinkedHashSet`, `WeakHashMap.newWeakHashMap`), with comparisons to `new Type<>(initialCapacity)` and notes on **load factor**. |
-| **Language (JEP 427)** | **`sealed` types**, **`record`**, pattern matching for **`switch`**, **`when`** guards, exhaustiveness—under package `com.storebackoffice.patternswitch`. |
+---
+
+## What is in this repository
+
+| Area | Location on disk | Java package | Focus |
+|------|------------------|--------------|--------|
+| **Collection factories & load factor** | `src/main/java/com/storebackoffice/loadfactor/` | **`com.storebackoffice`** | `HashMap.newHashMap`, `HashSet.newHashSet`, `LinkedHashMap.newLinkedHashMap`, `LinkedHashSet.newLinkedHashSet`, `WeakHashMap.newWeakHashMap` vs raw `initialCapacity` and custom **load factor** constructors. |
+| **HashSet / LinkedHashSet / TreeSet** | `src/main/java/com/storebackoffice/setcomparison/` | **`com.storebackoffice.setcomparison`** | Iteration order, duplicates, `null`, `Comparator`, `NavigableSet` (`HashLinkedTreeSetDemo`). |
+| **Pattern `switch`** | `src/main/java/com/storebackoffice/patternswitch/` | **`com.storebackoffice.patternswitch`** | `sealed` + `record` + type patterns + `when` + exhaustiveness (`PatternSwitchDemo`). |
+
+**Note:** Classes under `loadfactor/` still declare `package com.storebackoffice;`—the folder is only for filesystem organization. Fully qualified names for those mains **do not** include `.loadfactor`.
+
+---
 
 ## Prerequisites
 
-- **JDK 21** or newer (matches `maven.compiler.source` / `target` in `pom.xml`)
-- **Apache Maven 3.x**
+- **JDK 21+**
+- **Maven 3.x**
 
 ```bash
 java -version
 mvn -version
 ```
 
-## Build
+## Compile
 
 ```bash
 mvn -q compile
 ```
 
-Compiled classes are written to `target/classes`.
+Output: `target/classes`.
 
-## Running demos
+## Run a demo
 
-Every demo exposes `public static void main(String[] args)`.
+Each listed type has `public static void main(String[] args)`.
 
-### Option A: Maven Exec (plugin is resolved from the default plugin repository when you invoke the goal)
+**Maven Exec** (plugin version resolved when you run the goal):
 
 ```bash
 mvn -q compile exec:java -Dexec.mainClass=<fully.qualified.ClassName>
 ```
 
-### Option B: `java` on the classpath (no Exec plugin required)
-
-After `mvn -q compile`:
+**Plain `java`** (after `mvn -q compile`):
 
 ```bash
-java -cp target/classes com.storebackoffice.HashMapNewHashMapDemo
-java -cp target/classes com.storebackoffice.patternswitch.PatternSwitchDemo
+java -cp target/classes <fully.qualified.ClassName>
 ```
 
-### Demo catalog
+### All entry points (`main`)
 
-Base package **`com.storebackoffice`** (except pattern switch):
-
-| Main class | Highlights |
-|------------|------------|
-| `com.storebackoffice.HashMapNewHashMapDemo` | `HashMap.newHashMap`, vs `new HashMap<>(capacity)`, load factor |
+| Fully qualified class | Role |
+|-----------------------|------|
+| `com.storebackoffice.HashMapNewHashMapDemo` | `HashMap.newHashMap`, capacity vs mappings, load factor |
 | `com.storebackoffice.HashSetNewHashSetDemo` | `HashSet.newHashSet`, load factor |
 | `com.storebackoffice.LinkedHashMapNewLinkedHashMapDemo` | `LinkedHashMap.newLinkedHashMap`, insertion order, load factor |
 | `com.storebackoffice.LinkedHashSetNewLinkedHashSetDemo` | `LinkedHashSet.newLinkedHashSet`, insertion order, load factor |
-| `com.storebackoffice.WeakHashMapNewWeakHashMapDemo` | `WeakHashMap.newWeakHashMap`, weak keys + GC caveats, load factor |
+| `com.storebackoffice.WeakHashMapNewWeakHashMapDemo` | `WeakHashMap.newWeakHashMap`, weak keys, GC, load factor |
+| `com.storebackoffice.setcomparison.HashLinkedTreeSetDemo` | `HashSet` vs `LinkedHashSet` vs `TreeSet` |
+| `com.storebackoffice.patternswitch.PatternSwitchDemo` | Pattern matching for `switch` (JEP 427) |
 | `com.storebackoffice.Main` | Minimal placeholder |
 
-Language demo (separate package):
-
-| Main class | Highlights |
-|------------|------------|
-| `com.storebackoffice.patternswitch.PatternSwitchDemo` | JEP 427-style pattern `switch`: `sealed` `Payment`, `record` permits, `case` / `when`, exhaustive `switch` |
-
-### Copy-paste: Exec plugin
+### Copy-paste (`exec:java`)
 
 ```bash
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.HashMapNewHashMapDemo
@@ -73,45 +77,52 @@ mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.HashSetNewHashSetD
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.LinkedHashMapNewLinkedHashMapDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.LinkedHashSetNewLinkedHashSetDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.WeakHashMapNewWeakHashMapDemo
+mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.setcomparison.HashLinkedTreeSetDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.patternswitch.PatternSwitchDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.Main
 ```
 
-## Why the new collection factories matter
+---
 
-For `HashMap` and friends, `new HashMap<>(n)` means **`n` is initial bucket capacity**, not “I will store `n` pairs.” With the default **load factor** (0.75), a wrong `n` causes unnecessary **resize / rehash** work.
+## Why `newHashMap(n)` (and friends) exist
 
-The JDK 19 factories take **`numMappings`** or **`numElements`**: the implementation chooses a capacity suited to holding about that many entries at the default load factor.
+`new HashMap<>(n)` uses **`n` as initial table capacity** (buckets), not “I will store `n` entries.” With default **load factor** `0.75`, a poorly chosen `n` causes extra **resize / rehash** work.
 
-For a **non-default load factor**, keep using constructors such as `HashMap(int, float)`, `LinkedHashMap(int, float, boolean)`, `WeakHashMap(int, float)`, etc.
+The JDK 19 factories take **`numMappings`** / **`numElements`** and pick a capacity suited to about that many entries at the default load factor.
 
-## Source layout
+For a **different load factor**, use constructors such as `HashMap(int, float)`, `LinkedHashMap(int, float, boolean)`, `WeakHashMap(int, float)`, etc.
+
+---
+
+## Source tree
 
 ```text
-java19/
-├── pom.xml
-├── README.md
-└── src/main/java/com/storebackoffice/
-    ├── Main.java
-    ├── HashMapNewHashMapDemo.java
-    ├── HashSetNewHashSetDemo.java
-    ├── LinkedHashMapNewLinkedHashMapDemo.java
-    ├── LinkedHashSetNewLinkedHashSetDemo.java
-    ├── WeakHashMapNewWeakHashMapDemo.java
-    └── patternswitch/
-        └── PatternSwitchDemo.java   # sealed Payment + records; pattern switch
+src/main/java/com/storebackoffice/
+├── loadfactor/
+│   ├── Main.java
+│   ├── HashMapNewHashMapDemo.java
+│   ├── HashSetNewHashSetDemo.java
+│   ├── LinkedHashMapNewLinkedHashMapDemo.java
+│   ├── LinkedHashSetNewLinkedHashSetDemo.java
+│   └── WeakHashMapNewWeakHashMapDemo.java
+├── setcomparison/
+│   └── HashLinkedTreeSetDemo.java
+└── patternswitch/
+    └── PatternSwitchDemo.java
 ```
+
+---
 
 ## References
 
 - [JDK 19 release notes](https://www.oracle.com/java/technologies/javase/19-relnote-issues.html)
-- [JEP 427: Pattern Matching for switch](https://openjdk.org/jeps/427) (preview scope in JDK 19; finalized in a later release—this project uses **JDK 21** syntax)
-- Javadoc (Java 21+): `HashMap.newHashMap`, `HashSet.newHashSet`, `LinkedHashMap.newLinkedHashMap`, `LinkedHashSet.newLinkedHashSet`, `WeakHashMap.newWeakHashMap`
+- [JEP 427: Pattern Matching for switch](https://openjdk.org/jeps/427)
+- Java 21+ Javadoc: `HashMap.newHashMap`, `HashSet.newHashSet`, `LinkedHashMap.newLinkedHashMap`, `LinkedHashSet.newLinkedHashSet`, `WeakHashMap.newWeakHashMap`, `TreeSet`, `NavigableSet`
 
 ## Encoding
 
-Keep **`README.md` and `*.java` as UTF-8** (without UTF-16). Mixed encodings break diffs and GitHub rendering.
+Use **UTF-8** for `README.md` and sources. **Do not** save the README as UTF-16 (Git / IDE diffs will show spurious `NUL` characters).
 
 ## License
 
-No `LICENSE` file is checked in; treat terms as unspecified until you add one.
+No `LICENSE` file is present; treat redistribution terms as unspecified until you add one.
