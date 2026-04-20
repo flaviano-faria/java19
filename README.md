@@ -6,7 +6,7 @@
 | **JDK** | **21** (`maven.compiler.source` / `target` in `pom.xml`) |
 | **Build** | Apache Maven, **no third-party dependencies** |
 
-Small **executable demos** for **JDK 19–era `java.util` factory methods** (still current on newer JDKs), a **set comparison** walkthrough, **virtual threads** (JEP 425, preview in 19; **final in 21**), and **pattern matching for `switch`** (JEP 427, preview in 19; **final in 21**). This repo targets **Java 21** and does not use `--enable-preview`.
+Small **executable demos** for **JDK 19–era `java.util` factory methods** (still current on newer JDKs), a **set comparison** walkthrough, **virtual threads** (JEP 425), **record patterns** (JEP 405), and **pattern matching for `switch`** (JEP 427). Those language JEPs were **preview in JDK 19** and are **final in JDK 21** (this repo targets **Java 21** with no `--enable-preview`).
 
 ---
 
@@ -17,6 +17,7 @@ Small **executable demos** for **JDK 19–era `java.util` factory methods** (sti
 | **Collection factories & load factor** | `src/main/java/com/storebackoffice/loadfactor/` | **`com.storebackoffice`** | `HashMap.newHashMap`, `HashSet.newHashSet`, `LinkedHashMap.newLinkedHashMap`, `LinkedHashSet.newLinkedHashSet`, `WeakHashMap.newWeakHashMap` vs raw `initialCapacity` and custom **load factor** constructors. |
 | **HashSet / LinkedHashSet / TreeSet** | `src/main/java/com/storebackoffice/setcomparison/` | **`com.storebackoffice.setcomparison`** | Iteration order, duplicates, `null`, `Comparator`, `NavigableSet` (`HashLinkedTreeSetDemo`). |
 | **Virtual threads** | `src/main/java/com/storebackoffice/virtualthreads/` | **`com.storebackoffice.virtualthreads`** | `Executors.newVirtualThreadPerTaskExecutor()`, `Thread.ofVirtual()` (`VirtualThreadsDemo`). |
+| **Record patterns** | `src/main/java/com/storebackoffice/recordpatterns/` | **`com.storebackoffice.recordpatterns`** | `instanceof` + `switch` with **nested** record decomposition, `var` patterns (`RecordPatternsDemo`). |
 | **Pattern `switch`** | `src/main/java/com/storebackoffice/patternswitch/` | **`com.storebackoffice.patternswitch`** | `sealed` + `record` + type patterns + `when` + exhaustiveness (`PatternSwitchDemo`). |
 
 **Note:** Classes under `loadfactor/` still declare `package com.storebackoffice;`—the folder is only for filesystem organization. Fully qualified names for those mains **do not** include `.loadfactor`.
@@ -68,6 +69,7 @@ java -cp target/classes <fully.qualified.ClassName>
 | `com.storebackoffice.WeakHashMapNewWeakHashMapDemo` | `WeakHashMap.newWeakHashMap`, weak keys, GC, load factor |
 | `com.storebackoffice.setcomparison.HashLinkedTreeSetDemo` | `HashSet` vs `LinkedHashSet` vs `TreeSet` |
 | `com.storebackoffice.virtualthreads.VirtualThreadsDemo` | Virtual threads (JEP 425): many blocking tasks, one executor |
+| `com.storebackoffice.recordpatterns.RecordPatternsDemo` | Record patterns (JEP 405): `instanceof`, nested `switch`, `var` |
 | `com.storebackoffice.patternswitch.PatternSwitchDemo` | Pattern matching for `switch` (JEP 427) |
 | `com.storebackoffice.Main` | Minimal placeholder |
 
@@ -81,6 +83,7 @@ mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.LinkedHashSetNewLi
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.WeakHashMapNewWeakHashMapDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.setcomparison.HashLinkedTreeSetDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.virtualthreads.VirtualThreadsDemo
+mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.recordpatterns.RecordPatternsDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.patternswitch.PatternSwitchDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.Main
 ```
@@ -112,6 +115,8 @@ src/main/java/com/storebackoffice/
 │   └── HashLinkedTreeSetDemo.java
 ├── virtualthreads/
 │   └── VirtualThreadsDemo.java
+├── recordpatterns/
+│   └── RecordPatternsDemo.java
 └── patternswitch/
     └── PatternSwitchDemo.java
 ```
@@ -122,18 +127,19 @@ src/main/java/com/storebackoffice/
 
 | JEP (19) | Topic | Fit for this repo |
 |----------|--------|-------------------|
-| **405** | Record patterns | Add `recordpatterns` demo: nested deconstruction in `instanceof` / `switch` (final in 21). |
+| **405** | Record patterns | Implemented: `recordpatterns.RecordPatternsDemo` (`instanceof`, nested `switch`, `var`). |
 | **428** | Structured concurrency | `StructuredTaskScope` in `java.util.concurrent` (API evolved after 19; good for a small fan-out / failure demo on 21). |
 | **424** | Foreign Function & Memory | Native interop without JNI; needs **preview** on 21 or **JDK 22+** for finalized FFM—best as a **Maven profile**. |
 | **426** | Vector API | `jdk.incubator.vector`; needs **`--add-modules`** and is hardware-specific. |
 
-Virtual threads and pattern `switch` are the lowest-friction “big” 19-era features on **Java 21** with no extra JVM flags.
+Virtual threads, record patterns, and pattern `switch` are **Java 21–final** 19-era language features with no extra JVM flags in this repo.
 
 ---
 
 ## References
 
 - [JDK 19 release notes](https://www.oracle.com/java/technologies/javase/19-relnote-issues.html)
+- [JEP 405: Record Patterns](https://openjdk.org/jeps/405) (preview in 19; final in 21)
 - [JEP 425: Virtual Threads](https://openjdk.org/jeps/425) (preview in 19; final in 21)
 - [JEP 427: Pattern Matching for switch](https://openjdk.org/jeps/427)
 - Java 21+ Javadoc: `Executors.newVirtualThreadPerTaskExecutor`, `Thread.ofVirtual`, `HashMap.newHashMap`, `HashSet.newHashSet`, `LinkedHashMap.newLinkedHashMap`, `LinkedHashSet.newLinkedHashSet`, `WeakHashMap.newWeakHashMap`, `TreeSet`, `NavigableSet`
