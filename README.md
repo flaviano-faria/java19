@@ -6,7 +6,9 @@
 | **JDK** | **21** (`maven.compiler.source` / `target` in `pom.xml`) |
 | **Build** | Apache Maven, **no third-party dependencies** |
 
-Small **executable demos** for **JDK 19–era `java.util` factory methods** (still current on newer JDKs), a **set comparison** walkthrough, **virtual threads** (JEP 425), **record patterns** (JEP 405), and **pattern matching for `switch`** (JEP 427). Those language JEPs were **preview in JDK 19** and are **final in JDK 21** (this repo targets **Java 21** with no `--enable-preview`).
+Small **executable demos** for **JDK 19–era `java.util` factory methods** (still current on newer JDKs), a **set comparison** walkthrough, **virtual threads** (JEP 425), **record patterns** (JEP 405), **pattern matching for `switch`** (JEP 427), and **structured concurrency** (JEP 428 lineage via `StructuredTaskScope`).
+
+**Preview flags:** `maven-compiler-plugin` passes **`--enable-preview`** so **`StructuredTaskScope`** compiles on **JDK 21** (it is still a **preview API** there). Most `main` classes run with plain `mvn exec:java`. **`StructuredConcurrencyDemo`** also needs **`--enable-preview` on the JVM that runs `exec:java`** (that goal runs in the **same process as Maven**), e.g. `MAVEN_OPTS=--enable-preview`, or run with `java --enable-preview -cp target/classes ...`. On newer JDKs where `StructuredTaskScope` is final, drop preview from the POM and from your run command.
 
 ---
 
@@ -18,6 +20,7 @@ Small **executable demos** for **JDK 19–era `java.util` factory methods** (sti
 | **HashSet / LinkedHashSet / TreeSet** | `src/main/java/com/storebackoffice/setcomparison/` | **`com.storebackoffice.setcomparison`** | Iteration order, duplicates, `null`, `Comparator`, `NavigableSet` (`HashLinkedTreeSetDemo`). |
 | **Virtual threads** | `src/main/java/com/storebackoffice/virtualthreads/` | **`com.storebackoffice.virtualthreads`** | `Executors.newVirtualThreadPerTaskExecutor()`, `Thread.ofVirtual()` (`VirtualThreadsDemo`). |
 | **Record patterns** | `src/main/java/com/storebackoffice/recordpatterns/` | **`com.storebackoffice.recordpatterns`** | `instanceof` + `switch` with **nested** record decomposition, `var` patterns (`RecordPatternsDemo`). |
+| **Structured concurrency** | `src/main/java/com/storebackoffice/structuredconcurrency/` | **`com.storebackoffice.structuredconcurrency`** | `StructuredTaskScope.ShutdownOnFailure` / `ShutdownOnSuccess` (`StructuredConcurrencyDemo`; **preview on JDK 21**). |
 | **Pattern `switch`** | `src/main/java/com/storebackoffice/patternswitch/` | **`com.storebackoffice.patternswitch`** | `sealed` + `record` + type patterns + `when` + exhaustiveness (`PatternSwitchDemo`). |
 
 **Note:** Classes under `loadfactor/` still declare `package com.storebackoffice;`—the folder is only for filesystem organization. Fully qualified names for those mains **do not** include `.loadfactor`.
@@ -58,6 +61,12 @@ mvn -q compile exec:java -Dexec.mainClass=<fully.qualified.ClassName>
 java -cp target/classes <fully.qualified.ClassName>
 ```
 
+For **`StructuredConcurrencyDemo`** on JDK 21:
+
+```bash
+java --enable-preview -cp target/classes com.storebackoffice.structuredconcurrency.StructuredConcurrencyDemo
+```
+
 ### All entry points (`main`)
 
 | Fully qualified class | Role |
@@ -70,6 +79,7 @@ java -cp target/classes <fully.qualified.ClassName>
 | `com.storebackoffice.setcomparison.HashLinkedTreeSetDemo` | `HashSet` vs `LinkedHashSet` vs `TreeSet` |
 | `com.storebackoffice.virtualthreads.VirtualThreadsDemo` | Virtual threads (JEP 425): many blocking tasks, one executor |
 | `com.storebackoffice.recordpatterns.RecordPatternsDemo` | Record patterns (JEP 405): `instanceof`, nested `switch`, `var` |
+| `com.storebackoffice.structuredconcurrency.StructuredConcurrencyDemo` | Structured concurrency (JEP 428): `ShutdownOnFailure`, `ShutdownOnSuccess` (**needs `MAVEN_OPTS=--enable-preview`** with `mvn exec:java` on JDK 21) |
 | `com.storebackoffice.patternswitch.PatternSwitchDemo` | Pattern matching for `switch` (JEP 427) |
 | `com.storebackoffice.Main` | Minimal placeholder |
 
@@ -84,6 +94,9 @@ mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.WeakHashMapNewWeak
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.setcomparison.HashLinkedTreeSetDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.virtualthreads.VirtualThreadsDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.recordpatterns.RecordPatternsDemo
+# Structured concurrency (preview API on JDK 21 — enable preview on the Maven JVM):
+#   PowerShell:  $env:MAVEN_OPTS="--enable-preview"; mvn -q exec:java "-Dexec.mainClass=com.storebackoffice.structuredconcurrency.StructuredConcurrencyDemo"
+#   bash:        MAVEN_OPTS=--enable-preview mvn -q exec:java -Dexec.mainClass=com.storebackoffice.structuredconcurrency.StructuredConcurrencyDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.patternswitch.PatternSwitchDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.Main
 ```
@@ -117,6 +130,8 @@ src/main/java/com/storebackoffice/
 │   └── VirtualThreadsDemo.java
 ├── recordpatterns/
 │   └── RecordPatternsDemo.java
+├── structuredconcurrency/
+│   └── StructuredConcurrencyDemo.java
 └── patternswitch/
     └── PatternSwitchDemo.java
 ```
@@ -128,11 +143,11 @@ src/main/java/com/storebackoffice/
 | JEP (19) | Topic | Fit for this repo |
 |----------|--------|-------------------|
 | **405** | Record patterns | Implemented: `recordpatterns.RecordPatternsDemo` (`instanceof`, nested `switch`, `var`). |
-| **428** | Structured concurrency | `StructuredTaskScope` in `java.util.concurrent` (API evolved after 19; good for a small fan-out / failure demo on 21). |
+| **428** | Structured concurrency | Implemented: `structuredconcurrency.StructuredConcurrencyDemo` (`ShutdownOnFailure`, `ShutdownOnSuccess`). **Preview on JDK 21** (`--enable-preview` at compile; `MAVEN_OPTS` or `java --enable-preview` at run for this main). |
 | **424** | Foreign Function & Memory | Native interop without JNI; needs **preview** on 21 or **JDK 22+** for finalized FFM—best as a **Maven profile**. |
 | **426** | Vector API | `jdk.incubator.vector`; needs **`--add-modules`** and is hardware-specific. |
 
-Virtual threads, record patterns, and pattern `switch` are **Java 21–final** 19-era language features with no extra JVM flags in this repo.
+Virtual threads, record patterns, and pattern `switch` are **final in JDK 21** with no preview flags. **`StructuredTaskScope`** follows **JEP 428** (incubator in 19) and is **preview in JDK 21**, so this repo enables **`--enable-preview` at compile** and documents how to enable it **at runtime** only for that demo.
 
 ---
 
@@ -142,7 +157,8 @@ Virtual threads, record patterns, and pattern `switch` are **Java 21–final** 1
 - [JEP 405: Record Patterns](https://openjdk.org/jeps/405) (preview in 19; final in 21)
 - [JEP 425: Virtual Threads](https://openjdk.org/jeps/425) (preview in 19; final in 21)
 - [JEP 427: Pattern Matching for switch](https://openjdk.org/jeps/427)
-- Java 21+ Javadoc: `Executors.newVirtualThreadPerTaskExecutor`, `Thread.ofVirtual`, `HashMap.newHashMap`, `HashSet.newHashSet`, `LinkedHashMap.newLinkedHashMap`, `LinkedHashSet.newLinkedHashSet`, `WeakHashMap.newWeakHashMap`, `TreeSet`, `NavigableSet`
+- [JEP 428: Structured Concurrency](https://openjdk.org/jeps/428) (incubator in 19; `StructuredTaskScope` preview in JDK 21)
+- Java 21+ Javadoc: `Executors.newVirtualThreadPerTaskExecutor`, `Thread.ofVirtual`, `StructuredTaskScope`, `HashMap.newHashMap`, `HashSet.newHashSet`, `LinkedHashMap.newLinkedHashMap`, `LinkedHashSet.newLinkedHashSet`, `WeakHashMap.newWeakHashMap`, `TreeSet`, `NavigableSet`
 
 ## Encoding
 
