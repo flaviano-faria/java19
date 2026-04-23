@@ -6,7 +6,7 @@
 | **JDK** | **21** (`maven.compiler.source` / `target` in `pom.xml`) |
 | **Build** | Apache Maven, **no third-party dependencies** |
 
-Small **executable demos** for **JDK 19–era `java.util` factory methods** (still current on newer JDKs), a **set comparison** walkthrough, **virtual threads** (JEP 425), **record patterns** (JEP 405), **pattern matching for `switch`** (JEP 427), and **structured concurrency** (JEP 428 lineage via `StructuredTaskScope`).
+Small **executable demos** for **JDK 19–era `java.util` factory methods** (still current on newer JDKs), **`java.util.concurrent` / `java.lang` conveniences** (`ExecutorService` + `AutoCloseable`, `Thread.sleep(Duration)`), a **set comparison** walkthrough, **virtual threads** (JEP 425), **record patterns** (JEP 405), **pattern matching for `switch`** (JEP 427), and **structured concurrency** (JEP 428 lineage via `StructuredTaskScope`).
 
 **Preview flags:** `maven-compiler-plugin` passes **`--enable-preview`** so **`StructuredTaskScope`** compiles on **JDK 21** (it is still a **preview API** there). Most `main` classes run with plain `mvn exec:java`. **`StructuredConcurrencyDemo`** also needs **`--enable-preview` on the JVM that runs `exec:java`** (that goal runs in the **same process as Maven**), e.g. `MAVEN_OPTS=--enable-preview`, or run with `java --enable-preview -cp target/classes ...`. On newer JDKs where `StructuredTaskScope` is final, drop preview from the POM and from your run command.
 
@@ -18,6 +18,7 @@ Small **executable demos** for **JDK 19–era `java.util` factory methods** (sti
 |------|------------------|--------------|--------|
 | **Collection factories & load factor** | `src/main/java/com/storebackoffice/loadfactor/` | **`com.storebackoffice`** | `HashMap.newHashMap`, `HashSet.newHashSet`, `LinkedHashMap.newLinkedHashMap`, `LinkedHashSet.newLinkedHashSet`, `WeakHashMap.newWeakHashMap` vs raw `initialCapacity` and custom **load factor** constructors. |
 | **HashSet / LinkedHashSet / TreeSet** | `src/main/java/com/storebackoffice/setcomparison/` | **`com.storebackoffice.setcomparison`** | Iteration order, duplicates, `null`, `Comparator`, `NavigableSet` (`HashLinkedTreeSetDemo`). |
+| **Executor conveniences** | `src/main/java/com/storebackoffice/executor/` | **`com.storebackoffice.executor`** | **`ExecutorService`** in **try-with-resources** (extends **`AutoCloseable`** since 19); **`Thread.sleep(Duration)`** (`ExecutorServiceAutoCloseableDemo`). |
 | **Virtual threads** | `src/main/java/com/storebackoffice/virtualthreads/` | **`com.storebackoffice.virtualthreads`** | `Executors.newVirtualThreadPerTaskExecutor()`, `Thread.ofVirtual()` (`VirtualThreadsDemo`). |
 | **Record patterns** | `src/main/java/com/storebackoffice/recordpatterns/` | **`com.storebackoffice.recordpatterns`** | `instanceof` + `switch` with **nested** record decomposition, `var` patterns (`RecordPatternsDemo`). |
 | **Structured concurrency** | `src/main/java/com/storebackoffice/structuredconcurrency/` | **`com.storebackoffice.structuredconcurrency`** | `StructuredTaskScope.ShutdownOnFailure` / `ShutdownOnSuccess` (`StructuredConcurrencyDemo`; **preview on JDK 21**). |
@@ -77,6 +78,7 @@ java --enable-preview -cp target/classes com.storebackoffice.structuredconcurren
 | `com.storebackoffice.LinkedHashSetNewLinkedHashSetDemo` | `LinkedHashSet.newLinkedHashSet`, insertion order, load factor |
 | `com.storebackoffice.WeakHashMapNewWeakHashMapDemo` | `WeakHashMap.newWeakHashMap`, weak keys, GC, load factor |
 | `com.storebackoffice.setcomparison.HashLinkedTreeSetDemo` | `HashSet` vs `LinkedHashSet` vs `TreeSet` |
+| `com.storebackoffice.executor.ExecutorServiceAutoCloseableDemo` | JDK 19: `ExecutorService` + try-with-resources; `Thread.sleep(Duration)` |
 | `com.storebackoffice.virtualthreads.VirtualThreadsDemo` | Virtual threads (JEP 425): many blocking tasks, one executor |
 | `com.storebackoffice.recordpatterns.RecordPatternsDemo` | Record patterns (JEP 405): `instanceof`, nested `switch`, `var` |
 | `com.storebackoffice.structuredconcurrency.StructuredConcurrencyDemo` | Structured concurrency (JEP 428): `ShutdownOnFailure`, `ShutdownOnSuccess` (**needs `MAVEN_OPTS=--enable-preview`** with `mvn exec:java` on JDK 21) |
@@ -92,6 +94,7 @@ mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.LinkedHashMapNewLi
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.LinkedHashSetNewLinkedHashSetDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.WeakHashMapNewWeakHashMapDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.setcomparison.HashLinkedTreeSetDemo
+mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.executor.ExecutorServiceAutoCloseableDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.virtualthreads.VirtualThreadsDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.recordpatterns.RecordPatternsDemo
 # Structured concurrency (preview API on JDK 21 — enable preview on the Maven JVM):
@@ -126,6 +129,8 @@ src/main/java/com/storebackoffice/
 │   └── WeakHashMapNewWeakHashMapDemo.java
 ├── setcomparison/
 │   └── HashLinkedTreeSetDemo.java
+├── executor/
+│   └── ExecutorServiceAutoCloseableDemo.java
 ├── virtualthreads/
 │   └── VirtualThreadsDemo.java
 ├── recordpatterns/
@@ -146,6 +151,7 @@ src/main/java/com/storebackoffice/
 | **428** | Structured concurrency | Implemented: `structuredconcurrency.StructuredConcurrencyDemo` (`ShutdownOnFailure`, `ShutdownOnSuccess`). **Preview on JDK 21** (`--enable-preview` at compile; `MAVEN_OPTS` or `java --enable-preview` at run for this main). |
 | **424** | Foreign Function & Memory | Native interop without JNI; needs **preview** on 21 or **JDK 22+** for finalized FFM—best as a **Maven profile**. |
 | **426** | Vector API | `jdk.incubator.vector`; needs **`--add-modules`** and is hardware-specific. |
+| **Library (JDK 19)** | `ExecutorService` / `Thread` | **`ExecutorService` extends `AutoCloseable`** (try-with-resources); **`Thread.sleep(Duration)`**—see `executor.ExecutorServiceAutoCloseableDemo` and [JDK 19 release notes](https://www.oracle.com/java/technologies/javase/19-relnote-issues.html). |
 
 Virtual threads, record patterns, and pattern `switch` are **final in JDK 21** with no preview flags. **`StructuredTaskScope`** follows **JEP 428** (incubator in 19) and is **preview in JDK 21**, so this repo enables **`--enable-preview` at compile** and documents how to enable it **at runtime** only for that demo.
 
@@ -158,7 +164,7 @@ Virtual threads, record patterns, and pattern `switch` are **final in JDK 21** w
 - [JEP 425: Virtual Threads](https://openjdk.org/jeps/425) (preview in 19; final in 21)
 - [JEP 427: Pattern Matching for switch](https://openjdk.org/jeps/427)
 - [JEP 428: Structured Concurrency](https://openjdk.org/jeps/428) (incubator in 19; `StructuredTaskScope` preview in JDK 21)
-- Java 21+ Javadoc: `Executors.newVirtualThreadPerTaskExecutor`, `Thread.ofVirtual`, `StructuredTaskScope`, `HashMap.newHashMap`, `HashSet.newHashSet`, `LinkedHashMap.newLinkedHashMap`, `LinkedHashSet.newLinkedHashSet`, `WeakHashMap.newWeakHashMap`, `TreeSet`, `NavigableSet`
+- Java 21+ Javadoc: `ExecutorService.close`, `Thread.sleep(Duration)`, `Executors.newVirtualThreadPerTaskExecutor`, `Thread.ofVirtual`, `StructuredTaskScope`, `HashMap.newHashMap`, `HashSet.newHashSet`, `LinkedHashMap.newLinkedHashMap`, `LinkedHashSet.newLinkedHashSet`, `WeakHashMap.newWeakHashMap`, `TreeSet`, `NavigableSet`
 
 ## Encoding
 
