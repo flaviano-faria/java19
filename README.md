@@ -6,9 +6,26 @@
 | **JDK** | **21** (`maven.compiler.source` / `target` in `pom.xml`) |
 | **Build** | Apache Maven, **no third-party dependencies** |
 
-Small **executable demos** for **JDK 19–era `java.util` factory methods** (still current on newer JDKs), **`java.util.concurrent` / `java.lang` conveniences** (`ExecutorService` + `AutoCloseable`, `Thread.sleep(Duration)`, **`Future.state()`**), a **set comparison** walkthrough, **virtual threads** (JEP 425), **record patterns** (JEP 405), **pattern matching for `switch`** (JEP 427), and **structured concurrency** (JEP 428 lineage via `StructuredTaskScope`).
+Small **executable demos** for features that appeared or matured around **JDK 19**: **`java.util` collection factories** (`HashMap.newHashMap` and friends), **`java.util.concurrent` / `java.lang` library updates** (`ExecutorService` + `AutoCloseable`, `Thread.sleep(Duration)`, **`Future.state()`**), a **set comparison** walkthrough, **virtual threads** (JEP 425), **record patterns** (JEP 405), **pattern matching for `switch`** (JEP 427), and **structured concurrency** (JEP 428 lineage via `StructuredTaskScope`).
 
-**Preview flags:** `maven-compiler-plugin` passes **`--enable-preview`** so **`StructuredTaskScope`** compiles on **JDK 21** (it is still a **preview API** there). Most `main` classes run with plain `mvn exec:java`. **`StructuredConcurrencyDemo`** also needs **`--enable-preview` on the JVM that runs `exec:java`** (that goal runs in the **same process as Maven**), e.g. `MAVEN_OPTS=--enable-preview`, or run with `java --enable-preview -cp target/classes ...`. On newer JDKs where `StructuredTaskScope` is final, drop preview from the POM and from your run command.
+**Preview flags:** `maven-compiler-plugin` uses **`--enable-preview`** so **`StructuredTaskScope`** compiles on **JDK 21** (still **preview** there). `exec-maven-plugin` passes **`--enable-preview`** on the forked JVM so **`mvn exec:java`** can run **`StructuredConcurrencyDemo`** without **`MAVEN_OPTS`**. For plain **`java`**, use **`--enable-preview`** when running that class (see below). On newer JDKs where **`StructuredTaskScope`** is final, drop preview from the POM and from your run command.
+
+---
+
+## Java 19 feature map (what ships in 19 vs this repo)
+
+JDK 19 bundled **language previews**, **incubator/concurrency APIs**, and **standard library** additions. This table links **JDK 19–era** items to the **`main`** that demonstrates them. The project **builds on JDK 21** so previews match that release; behavior is **final** in newer JDKs for several rows.
+
+| JDK 19–era topic | JEP or release note (19) | Implemented here |
+|------------------|---------------------------|------------------|
+| **Virtual threads** | [JEP 425](https://openjdk.org/jeps/425) (preview in 19; final in 21) | `virtualthreads.VirtualThreadsDemo` |
+| **Record patterns** | [JEP 405](https://openjdk.org/jeps/405) (preview in 19; final in 21) | `recordpatterns.RecordPatternsDemo` |
+| **Pattern matching for `switch`** | [JEP 427](https://openjdk.org/jeps/427) (preview in 19; final in 21) | `patternswitch.PatternSwitchDemo` |
+| **Structured concurrency** | [JEP 428](https://openjdk.org/jeps/428) (incubator in 19; `StructuredTaskScope` preview in 21) | `structuredconcurrency.StructuredConcurrencyDemo` |
+| **`ExecutorService` → `AutoCloseable`**, **`Thread.sleep(Duration)`** | [JDK 19 release notes](https://www.oracle.com/java/technologies/javase/19-relnote-issues.html) | `executor.ExecutorServiceAutoCloseableDemo` |
+| **`Future.state()`** (`Future.State`) | Same | `futurestate.FutureStateDemo` |
+| **Collection factories** (`newHashMap`, `newHashSet`, …) | Same | `loadfactor/*` demos |
+| **Set semantics** (`HashSet` / `LinkedHashSet` / `TreeSet`) | (not 19-specific; supporting material) | `setcomparison.HashLinkedTreeSetDemo` |
 
 ---
 
@@ -57,6 +74,8 @@ Each listed type has `public static void main(String[] args)`.
 mvn -q compile exec:java -Dexec.mainClass=<fully.qualified.ClassName>
 ```
 
+`pom.xml` configures **`exec-maven-plugin`** with **`--enable-preview`** so **`StructuredConcurrencyDemo`** runs via **`mvn exec:java`** without **`MAVEN_OPTS`**.
+
 **Plain `java`** (after `mvn -q compile`):
 
 ```bash
@@ -83,7 +102,7 @@ java --enable-preview -cp target/classes com.storebackoffice.structuredconcurren
 | `com.storebackoffice.futurestate.FutureStateDemo` | JDK 19: `Future.state()` for `RUNNING` / `SUCCESS` / `FAILED` / `CANCELLED` |
 | `com.storebackoffice.virtualthreads.VirtualThreadsDemo` | Virtual threads (JEP 425): many blocking tasks, one executor |
 | `com.storebackoffice.recordpatterns.RecordPatternsDemo` | Record patterns (JEP 405): `instanceof`, nested `switch`, `var` |
-| `com.storebackoffice.structuredconcurrency.StructuredConcurrencyDemo` | Structured concurrency (JEP 428): `ShutdownOnFailure`, `ShutdownOnSuccess` (**needs `MAVEN_OPTS=--enable-preview`** with `mvn exec:java` on JDK 21) |
+| `com.storebackoffice.structuredconcurrency.StructuredConcurrencyDemo` | Structured concurrency (JEP 428): `ShutdownOnFailure`, `ShutdownOnSuccess` (**preview** on JDK 21; `exec-maven-plugin` supplies **`--enable-preview`**—see `pom.xml`) |
 | `com.storebackoffice.patternswitch.PatternSwitchDemo` | Pattern matching for `switch` (JEP 427) |
 | `com.storebackoffice.Main` | Minimal placeholder |
 
@@ -100,9 +119,7 @@ mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.executor.ExecutorS
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.futurestate.FutureStateDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.virtualthreads.VirtualThreadsDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.recordpatterns.RecordPatternsDemo
-# Structured concurrency (preview API on JDK 21 — enable preview on the Maven JVM):
-#   PowerShell:  $env:MAVEN_OPTS="--enable-preview"; mvn -q exec:java "-Dexec.mainClass=com.storebackoffice.structuredconcurrency.StructuredConcurrencyDemo"
-#   bash:        MAVEN_OPTS=--enable-preview mvn -q exec:java -Dexec.mainClass=com.storebackoffice.structuredconcurrency.StructuredConcurrencyDemo
+mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.structuredconcurrency.StructuredConcurrencyDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.patternswitch.PatternSwitchDemo
 mvn -q compile exec:java -Dexec.mainClass=com.storebackoffice.Main
 ```
@@ -153,13 +170,13 @@ src/main/java/com/storebackoffice/
 | JEP (19) | Topic | Fit for this repo |
 |----------|--------|-------------------|
 | **405** | Record patterns | Implemented: `recordpatterns.RecordPatternsDemo` (`instanceof`, nested `switch`, `var`). |
-| **428** | Structured concurrency | Implemented: `structuredconcurrency.StructuredConcurrencyDemo` (`ShutdownOnFailure`, `ShutdownOnSuccess`). **Preview on JDK 21** (`--enable-preview` at compile; `MAVEN_OPTS` or `java --enable-preview` at run for this main). |
-| **424** | Foreign Function & Memory | Native interop without JNI; needs **preview** on 21 or **JDK 22+** for finalized FFM—best as a **Maven profile**. |
-| **426** | Vector API | `jdk.incubator.vector`; needs **`--add-modules`** and is hardware-specific. |
+| **428** | Structured concurrency | Implemented: `structuredconcurrency.StructuredConcurrencyDemo` (`ShutdownOnFailure`, `ShutdownOnSuccess`). **Preview on JDK 21**; use **`--enable-preview`** at compile and run. |
+| **424** | Foreign Function & Memory | Not included: native interop via **`java.lang.foreign`**; **preview** on JDK 21, **final** in JDK 22 ([JEP 454](https://openjdk.org/jeps/454)). |
+| **426** | Vector API | `jdk.incubator.vector`; needs **`--add-modules`** and is hardware-specific—not included. |
 | **Library (JDK 19)** | `ExecutorService` / `Thread` | **`ExecutorService` extends `AutoCloseable`** (try-with-resources); **`Thread.sleep(Duration)`**—see `executor.ExecutorServiceAutoCloseableDemo` and [JDK 19 release notes](https://www.oracle.com/java/technologies/javase/19-relnote-issues.html). |
 | **Library (JDK 19)** | `Future.state()` | Inspect **`Future.State`** (`RUNNING`, `SUCCESS`, `FAILED`, `CANCELLED`) without inferring from exceptions alone—see `futurestate.FutureStateDemo`. |
 
-Virtual threads, record patterns, and pattern `switch` are **final in JDK 21** with no preview flags. **`StructuredTaskScope`** follows **JEP 428** (incubator in 19) and is **preview in JDK 21**, so this repo enables **`--enable-preview` at compile** and documents how to enable it **at runtime** only for that demo.
+Virtual threads, record patterns, and pattern `switch` are **final in JDK 21** with no preview flags for those features. **`StructuredTaskScope`** is **preview in JDK 21**; this repo enables **`--enable-preview` at compile** and **`exec-maven-plugin`** passes **`--enable-preview`** at runtime for **`mvn exec:java`**.
 
 ---
 
